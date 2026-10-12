@@ -1,18 +1,16 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../layout/navbar";
 import Breadcrumb from "../layout/breadcrumb";
 import {
   ArrowLeft,
   ArrowRight,
   Building2,
-  Camera,
   Check,
   CheckCircle2,
   ChevronDown,
   Eye,
   EyeOff,
-  Image as ImageIcon,
   LockKeyhole,
   Mail,
   MapPin,
@@ -24,26 +22,31 @@ import {
   Users,
   BriefcaseBusiness,
   ChartNoAxesCombined,
-  X,
   Upload,
-  Home,
 } from "lucide-react";
 
-// Studio categories
+// Studio categories: studios can select multiple services.
 const categories = [
   "Photography",
   "Videography",
   "Graphic Design",
-  "Music & Audio",
   "Web Development",
+  "Mobile App Development",
+  "UI/UX Design",
+  "Branding & Logo Design",
+  "Music Production",
+  "Audio Recording",
   "Digital Marketing",
+  "Social Media Management",
   "Content Creation",
+  "Animation & Motion Graphics",
   "Fashion & Styling",
   "Event Planning",
+  "Printing & Publishing",
+  "Interior Design",
   "Other",
 ];
 
-// Studio sizes
 const studioTypes = [
   "Individual / Freelancer",
   "Small Studio",
@@ -51,10 +54,9 @@ const studioTypes = [
   "Large Agency",
 ];
 
-// Initial form data
 const initialValues = {
   studioName: "",
-  category: "",
+  category: [],
   studioType: "",
   location: "",
   phone: "",
@@ -63,14 +65,13 @@ const initialValues = {
   confirmPassword: "",
 };
 
-// Registration steps
 const steps = [
   { title: "Studio Details", icon: Building2 },
   { title: "Contact Info", icon: UserRound },
   { title: "Account Security", icon: ShieldCheck },
 ];
 
-// Reusable label outside Register to preserve input focus
+// Reusable label
 function Label({ children, required = true }) {
   return (
     <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -80,47 +81,55 @@ function Label({ children, required = true }) {
   );
 }
 
-// Reusable input outside Register
-function Field({
-  label,
-  icon: Icon,
-  disabled = false,
-  error,
-  hint,
-  children,
-}) {
+// Reusable form field
+function Field({ label, error, hint, children }) {
   return (
     <div className="min-w-0">
       <Label>{label}</Label>
-
-      {children ? (
-        children
-      ) : (
-        <div className="relative">
-          {Icon && (
-            <Icon
-              size={18}
-              className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${
-                disabled ? "text-slate-300" : "text-slate-400"
-              }`}
-            />
-          )}
-        </div>
-      )}
+      {children}
 
       {error && (
-        <p className="mt-1.5 text-xs text-red-500">{error}</p>
+        <p role="alert" className="mt-1.5 text-xs font-medium text-red-600">
+          {error}
+        </p>
       )}
 
       {!error && hint && (
-        <p className="mt-1.5 text-xs text-slate-400">{hint}</p>
+        <p className="mt-1.5 text-xs leading-5 text-slate-400">
+          {hint}
+        </p>
       )}
     </div>
   );
 }
 
-// Reusable image upload
+// Reusable input styles
+function inputClass(disabled = false, hasIcon = true) {
+  return `w-full rounded-xl border px-4 py-3 text-sm outline-none transition ${
+    hasIcon ? "pl-11" : ""
+  } ${
+    disabled
+      ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+      : "border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+  }`;
+}
+
+// Studio logo upload with preview URL cleanup
 function LogoUpload({ logo, setLogo, error, setError }) {
+  const [preview, setPreview] = useState("");
+
+  useEffect(() => {
+    if (!logo) {
+      setPreview("");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(logo);
+    setPreview(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [logo]);
+
   const handleFile = (event) => {
     const file = event.target.files?.[0];
 
@@ -146,19 +155,20 @@ function LogoUpload({ logo, setLogo, error, setError }) {
 
     setError("");
     setLogo(file);
+    event.target.value = "";
   };
 
   return (
     <div className="max-w-md">
       <Label required={false}>Studio Logo</Label>
 
-      <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-5 text-center transition hover:border-blue-400 hover:bg-blue-50/50">
-        {logo ? (
+      <label className="group flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-5 text-center transition hover:border-blue-400 hover:bg-blue-50/50">
+        {logo && preview ? (
           <>
             <img
-              src={URL.createObjectURL(logo)}
-              alt="Selected studio logo"
-              className="mb-3 h-16 w-16 rounded-xl border border-slate-200 bg-white object-contain"
+              src={preview}
+              alt="Selected studio logo preview"
+              className="mb-3 h-16 w-16 rounded-xl border border-slate-200 bg-white object-contain p-1"
             />
 
             <span className="max-w-full truncate text-sm font-semibold text-slate-700">
@@ -171,8 +181,8 @@ function LogoUpload({ logo, setLogo, error, setError }) {
           </>
         ) : (
           <>
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <Upload size={23} />
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition group-hover:bg-blue-100">
+              <Upload size={22} />
             </div>
 
             <span className="text-sm font-semibold text-slate-700">
@@ -194,18 +204,32 @@ function LogoUpload({ logo, setLogo, error, setError }) {
       </label>
 
       {error && (
-        <p className="mt-1.5 text-xs text-red-500">{error}</p>
+        <p role="alert" className="mt-1.5 text-xs font-medium text-red-600">
+          {error}
+        </p>
       )}
     </div>
   );
 }
 
-// Success modal
-function SuccessModal({ onClose, studioName }) {
+// Registration success modal
+function SuccessModal({ onClose, studioName, categories }) {
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
-      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
       <div
         role="dialog"
@@ -226,28 +250,33 @@ function SuccessModal({ onClose, studioName }) {
 
         <h2
           id="success-title"
-          className="mt-4 text-2xl font-extrabold text-slate-900"
+          className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900"
         >
           Congratulations!
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-slate-500">
-          Your StudioHub registration form for{" "}
+          You have completed the StudioHub registration form for{" "}
           <span className="font-semibold text-slate-800">
             {studioName}
-          </span>{" "}
-          has been completed successfully.
+          </span>.
         </p>
 
-        <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-left">
-          <p className="text-sm font-semibold text-amber-900">
-            One more thing
+        <div className="mt-5 rounded-xl bg-slate-50 p-4 text-left">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            Selected services
           </p>
-          <p className="mt-1 text-xs leading-5 text-amber-800">
-            This is a frontend demonstration. Your account has not been
-            saved to a database because the registration backend is not
-            connected yet.
-          </p>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <span
+                key={category}
+                className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-medium text-blue-700"
+              >
+                {category}
+              </span>
+            ))}
+          </div>
         </div>
 
         <button
@@ -277,10 +306,9 @@ export default function Register() {
   const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Field validation
   const valid = {
     studioName: values.studioName.trim().length >= 2,
-    category: Boolean(values.category),
+    category: values.category.length > 0,
     studioType: Boolean(values.studioType),
     location: values.location.trim().length >= 2,
     phone: /^\+?[0-9\s()-]{9,20}$/.test(values.phone.trim()),
@@ -311,19 +339,21 @@ export default function Register() {
     ["password", "confirmPassword"],
   ];
 
-  // Unlock the next field once all previous fields are valid
-  const isUnlocked = (field) => {
-    const index = fieldOrder.indexOf(field);
+  const getError = (field) => {
+    const messages = {
+      studioName: "Enter a studio name with at least 2 characters.",
+      category: "Select at least one studio service.",
+      studioType: "Please select your studio type.",
+      location: "Enter your studio location.",
+      phone: "Enter a valid phone number.",
+      email: "Enter a valid email address.",
+      password:
+        "Use at least 8 characters, including a letter and a number.",
+      confirmPassword: "Your passwords must match.",
+    };
 
-    if (index <= 0) return true;
-
-    return fieldOrder
-      .slice(0, index)
-      .every((previousField) => valid[previousField]);
+    return messages[field] || "Please complete this field.";
   };
-
-  const stepComplete = (step) =>
-    stepFields[step].every((field) => valid[field]);
 
   const updateField = (name, value) => {
     setValues((previous) => ({
@@ -337,46 +367,38 @@ export default function Register() {
     }));
   };
 
-  const fieldClass = (disabled = false) =>
-    `w-full rounded-xl border px-4 py-3 text-sm outline-none transition ${
-      disabled
-        ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-        : "border-slate-200 bg-white text-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-    }`;
+  // Prevent users from skipping incomplete earlier fields.
+  const isUnlocked = (field) => {
+    const index = fieldOrder.indexOf(field);
 
-  const inputClass = (disabled = false, hasIcon = true) =>
-    `${fieldClass(disabled)} ${hasIcon ? "pl-11" : ""}`;
+    if (index <= 0) return true;
+
+    return fieldOrder
+      .slice(0, index)
+      .every((previousField) => valid[previousField]);
+  };
+
+  const stepComplete = (step) =>
+    stepFields[step].every((field) => valid[field]);
 
   const validateStep = (step) => {
-    const invalidField = stepFields[step].find(
+    const invalidFields = stepFields[step].filter(
       (field) => !valid[field]
     );
 
-    if (invalidField) {
-      setErrors((previous) => ({
-        ...previous,
-        [invalidField]: getError(invalidField),
-      }));
+    if (invalidFields.length === 0) return true;
 
-      return false;
-    }
+    setErrors((previous) => {
+      const nextErrors = { ...previous };
 
-    return true;
-  };
+      invalidFields.forEach((field) => {
+        nextErrors[field] = getError(field);
+      });
 
-  const getError = (field) => {
-    const messages = {
-      studioName: "Enter a studio name with at least 2 characters.",
-      category: "Please select a studio category.",
-      studioType: "Please select your studio type.",
-      location: "Enter your studio location.",
-      phone: "Enter a valid phone number.",
-      email: "Enter a valid email address.",
-      password: "Use at least 8 characters, including a letter and a number.",
-      confirmPassword: "Your passwords must match.",
-    };
+      return nextErrors;
+    });
 
-    return messages[field] || "Please complete this field.";
+    return false;
   };
 
   const goNext = () => {
@@ -399,47 +421,66 @@ export default function Register() {
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    const invalidField = fieldOrder.find(
-      (field) => !valid[field]
-    );
+    if (!validateStep(0) || !validateStep(1) || !validateStep(2)) {
+      const firstInvalidStep = stepFields.findIndex((fields) =>
+        fields.some((field) => !valid[field])
+      );
 
-    if (invalidField) {
-      setErrors((previous) => ({
-        ...previous,
-        [invalidField]: getError(invalidField),
-      }));
+      setCurrentStep(firstInvalidStep === -1 ? 0 : firstInvalidStep);
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
     setShowSuccess(true);
   };
 
+  const goToStep = (index) => {
+    if (index <= currentStep) {
+      setCurrentStep(index);
+      setErrors({});
+      return;
+    }
+
+    for (let step = 0; step < index; step += 1) {
+      if (!validateStep(step)) {
+        setCurrentStep(step);
+        return;
+      }
+    }
+
+    setErrors({});
+    setCurrentStep(index);
+  };
+
   return (
     <>
       <Navbar />
 
-      <Breadcrumb
-        title="Studio Registration"
-        paths={[
-          { label: "Home", link: "/" },
-          { label: "Studio Registration", link: "/register" },
-        ]}
-      />
+      {/* Sticky breadcrumb: adjust top-16 to match your navbar height. */}
+      <div className="sticky top-16 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md">
+        <Breadcrumb
+          title="Studio Registration"
+          paths={[
+            { label: "Home", link: "/" },
+            { label: "Studio Registration", link: "/register" },
+          ]}
+        />
+      </div>
 
       <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
-        <div className="mx-auto grid min-h-screen max-w-[1600px] lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
+        <div className="mx-auto grid max-w-[1600px] lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
 
           {/* Desktop branding panel */}
           <aside className="relative hidden overflow-hidden bg-[#071d49] p-8 text-white lg:flex lg:flex-col xl:p-10">
-            <div className="absolute -right-20 top-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
-            <div className="absolute -left-20 bottom-10 h-64 w-64 rounded-full bg-blue-400/10 blur-3xl" />
+            <div className="pointer-events-none absolute -right-20 top-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
+            <div className="pointer-events-none absolute -left-20 bottom-10 h-64 w-64 rounded-full bg-blue-400/10 blur-3xl" />
 
             <div className="relative flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 shadow-lg shadow-blue-950/20">
                 <Building2 size={25} />
               </div>
 
-              <span className="text-2xl font-extrabold">
+              <span className="text-2xl font-extrabold tracking-tight">
                 Studio<span className="text-blue-400">Hub</span>
               </span>
             </div>
@@ -450,13 +491,13 @@ export default function Register() {
                 Your creative journey starts here
               </span>
 
-              <h1 className="max-w-sm text-4xl font-extrabold leading-tight tracking-tight">
+              <h1 className="max-w-sm text-4xl font-extrabold leading-tight tracking-tight xl:text-5xl">
                 Bring your studio into the spotlight.
               </h1>
 
               <p className="mt-5 max-w-sm text-sm leading-7 text-blue-100/80">
-                Create your studio profile, showcase your services, and
-                help customers discover your creative business.
+                Create your studio profile, showcase your services, and help
+                customers discover your creative business.
               </p>
 
               <div className="mt-10 space-y-6">
@@ -506,7 +547,7 @@ export default function Register() {
               <div className="mb-8 flex items-center justify-between gap-3">
                 <a
                   href="/"
-                  className="inline-flex items-center gap-2 text-sm text-slate-500 transition hover:text-blue-600"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-blue-600"
                 >
                   <ArrowLeft size={16} />
                   Back to Home
@@ -525,70 +566,98 @@ export default function Register() {
 
               <div className="mb-8">
                 <div className="mb-3 flex items-center gap-2 text-blue-600 lg:hidden">
-                  <Building2 size={24} />
+                  <Building2 size={25} />
                   <span className="text-xl font-extrabold">
                     Studio<span className="text-slate-900">Hub</span>
                   </span>
                 </div>
 
+                <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+                  Join StudioHub
+                </p>
+
                 <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
                   Create your studio account
                 </h1>
 
-                <p className="mt-2 text-sm leading-6 text-slate-500 sm:text-base">
-                  Tell us about your studio and get ready to showcase your work.
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
+                  Tell us about your studio, select the services you offer,
+                  and prepare your account.
                 </p>
               </div>
 
               {/* Progress steps */}
-              <div className="mb-8 grid grid-cols-3">
-                {steps.map(({ title, icon: Icon }, index) => {
-                  const active = currentStep === index;
-                  const complete = stepComplete(index);
+              <div className="mb-8 rounded-2xl border border-slate-200 bg-white px-3 py-5 shadow-sm sm:px-6">
+                <div className="grid grid-cols-3">
+                  {steps.map(({ title, icon: Icon }, index) => {
+                    const active = currentStep === index;
+                    const complete = stepComplete(index);
 
-                  const canVisit =
-                    index <= currentStep ||
-                    steps
-                      .slice(0, index)
-                      .every((_, previous) => stepComplete(previous));
+                    return (
+                      <button
+                        key={title}
+                        type="button"
+                        onClick={() => goToStep(index)}
+                        className="group flex min-w-0 flex-col items-center text-center"
+                        aria-current={active ? "step" : undefined}
+                      >
+                        <span
+                          className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition ${
+                            complete
+                              ? "border-blue-600 bg-blue-600 text-white"
+                              : active
+                                ? "border-blue-600 bg-blue-50 text-blue-600"
+                                : "border-slate-200 bg-white text-slate-400 group-hover:border-blue-300"
+                          }`}
+                        >
+                          {complete ? (
+                            <Check size={19} strokeWidth={2.5} />
+                          ) : (
+                            <Icon size={19} />
+                          )}
+                        </span>
 
-                  return (
-                    <button
-                      key={title}
-                      type="button"
-                      disabled={!canVisit}
-                      onClick={() => {
-                        if (!canVisit) return;
+                        <span
+                          className={`mt-2 text-[10px] font-semibold sm:text-sm ${
+                            active || complete
+                              ? "text-blue-700"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          {title}
+                        </span>
 
-                        setCurrentStep(index);
-                        setErrors({});
-                      }}
-                      className="flex flex-col items-center text-center disabled:cursor-not-allowed"
-                    >
-                      <span
-                        className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition ${
-                          complete
-                            ? "border-blue-600 bg-blue-600 text-white"
+                        <span
+                          className={`mt-1 hidden text-[10px] sm:block ${
+                            complete ? "text-emerald-600" : "text-slate-400"
+                          }`}
+                        >
+                          {complete
+                            ? "Completed"
                             : active
-                              ? "border-blue-600 bg-blue-50 text-blue-600"
-                              : "border-slate-200 bg-white text-slate-400"
-                        }`}
-                      >
-                        {complete ? <Check size={18} /> : <Icon size={18} />}
-                      </span>
+                              ? "In progress"
+                              : `Step ${index + 1}`}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-                      <span
-                        className={`mt-2 text-[11px] font-semibold sm:text-sm ${
-                          active || complete
-                            ? "text-blue-600"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        {title}
-                      </span>
-                    </button>
-                  );
-                })}
+                <div
+                  className="mt-5 h-1.5 overflow-hidden rounded-full bg-slate-100"
+                  role="progressbar"
+                  aria-valuemin={1}
+                  aria-valuemax={3}
+                  aria-valuenow={currentStep + 1}
+                  aria-label="Registration progress"
+                >
+                  <div
+                    className="h-full rounded-full bg-blue-600 transition-all duration-300"
+                    style={{
+                      width: `${((currentStep + 1) / 3) * 100}%`,
+                    }}
+                  />
+                </div>
               </div>
 
               <form
@@ -596,7 +665,7 @@ export default function Register() {
                 noValidate
                 className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
               >
-                {/* Form title */}
+                {/* Form heading */}
                 <div className="border-b border-slate-100 px-5 py-5 sm:px-8">
                   <div className="flex items-start gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
@@ -612,15 +681,15 @@ export default function Register() {
 
                       <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
                         {currentStep === 0 &&
-                          "Introduce your studio and select its category."}
+                          "Introduce your studio and select all applicable services."}
                         {currentStep === 1 &&
-                          "Add your location and contact information."}
+                          "Add your location and business contact information."}
                         {currentStep === 2 &&
                           "Create a secure password for your account."}
                       </p>
                     </div>
 
-                    <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-600 sm:text-xs">
+                    <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700 sm:text-xs">
                       Step {currentStep + 1} of 3
                     </span>
                   </div>
@@ -628,7 +697,7 @@ export default function Register() {
 
                 <div className="space-y-6 px-5 py-6 sm:px-8 sm:py-8">
 
-                  {/* STEP 1 */}
+                  {/* STEP 1: Studio details */}
                   {currentStep === 0 && (
                     <>
                       <Field
@@ -650,6 +719,7 @@ export default function Register() {
                             onChange={(event) =>
                               updateField("studioName", event.target.value)
                             }
+                            aria-invalid={Boolean(errors.studioName)}
                             className={inputClass(
                               !isUnlocked("studioName")
                             )}
@@ -657,79 +727,112 @@ export default function Register() {
                         </div>
                       </Field>
 
-                      <div className="grid gap-5 sm:grid-cols-2">
-                        <Field
-                          label="Studio Category"
-                          error={errors.category}
+                      <Field
+                        label="Studio Type"
+                        error={errors.studioType}
+                        hint="Choose the option that best describes your business."
+                      >
+                        <div className="relative">
+                          <BriefcaseBusiness
+                            size={18}
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                          />
+
+                          <select
+                            value={values.studioType}
+                            disabled={!isUnlocked("studioType")}
+                            onChange={(event) =>
+                              updateField("studioType", event.target.value)
+                            }
+                            aria-invalid={Boolean(errors.studioType)}
+                            className={`${inputClass(
+                              !isUnlocked("studioType")
+                            )} appearance-none pr-10`}
+                          >
+                            <option value="">Select studio type</option>
+
+                            {studioTypes.map((type) => (
+                              <option key={type} value={type}>
+                                {type}
+                              </option>
+                            ))}
+                          </select>
+
+                          <ChevronDown
+                            size={16}
+                            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                          />
+                        </div>
+                      </Field>
+
+                      <Field
+                        label="Studio Categories"
+                        error={errors.category}
+                        hint="Select every service your studio provides. For example, Photography and Videography can be selected together."
+                      >
+                        <div
+                          className={`grid grid-cols-1 gap-2 rounded-xl border p-3 sm:grid-cols-2 ${
+                            errors.category
+                              ? "border-red-300 bg-red-50/30"
+                              : "border-slate-200 bg-white"
+                          }`}
                         >
-                          <div className="relative">
-                            <Tag
-                              size={18}
-                              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                            />
+                          {categories.map((category) => {
+                            const selected =
+                              values.category.includes(category);
 
-                            <select
-                              value={values.category}
-                              disabled={!isUnlocked("category")}
-                              onChange={(event) =>
-                                updateField("category", event.target.value)
-                              }
-                              className={`${inputClass(
-                                !isUnlocked("category")
-                              )} appearance-none pr-10`}
-                            >
-                              <option value="">Select category</option>
+                            return (
+                              <label
+                                key={category}
+                                className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm transition ${
+                                  selected
+                                    ? "border-blue-300 bg-blue-50 text-blue-800"
+                                    : "border-transparent bg-slate-50 text-slate-600 hover:border-slate-200 hover:bg-white"
+                                } ${
+                                  !isUnlocked("category")
+                                    ? "cursor-not-allowed opacity-60"
+                                    : ""
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selected}
+                                  disabled={!isUnlocked("category")}
+                                  onChange={(event) => {
+                                    const nextCategories =
+                                      event.target.checked
+                                        ? [...values.category, category]
+                                        : values.category.filter(
+                                            (item) => item !== category
+                                          );
 
-                              {categories.map((category) => (
-                                <option key={category} value={category}>
+                                    updateField("category", nextCategories);
+                                  }}
+                                  className="h-4 w-4 shrink-0 rounded border-slate-300 accent-blue-600"
+                                />
+
+                                <span className="flex-1 font-medium">
                                   {category}
-                                </option>
-                              ))}
-                            </select>
+                                </span>
 
-                            <ChevronDown
-                              size={16}
-                              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-                            />
-                          </div>
-                        </Field>
+                                {selected && (
+                                  <CheckCircle2
+                                    size={17}
+                                    className="shrink-0 text-blue-600"
+                                  />
+                                )}
+                              </label>
+                            );
+                          })}
+                        </div>
 
-                        <Field
-                          label="Studio Type"
-                          error={errors.studioType}
-                        >
-                          <div className="relative">
-                            <BriefcaseBusiness
-                              size={18}
-                              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                            />
-
-                            <select
-                              value={values.studioType}
-                              disabled={!isUnlocked("studioType")}
-                              onChange={(event) =>
-                                updateField("studioType", event.target.value)
-                              }
-                              className={`${inputClass(
-                                !isUnlocked("studioType")
-                              )} appearance-none pr-10`}
-                            >
-                              <option value="">Select studio type</option>
-
-                              {studioTypes.map((type) => (
-                                <option key={type} value={type}>
-                                  {type}
-                                </option>
-                              ))}
-                            </select>
-
-                            <ChevronDown
-                              size={16}
-                              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-                            />
-                          </div>
-                        </Field>
-                      </div>
+                        {values.category.length > 0 && (
+                          <p className="mt-2 text-xs font-semibold text-blue-600">
+                            {values.category.length} service
+                            {values.category.length === 1 ? "" : "s"} selected
+                          </p>
+                        )}
+                      </Field>
 
                       <LogoUpload
                         logo={logo}
@@ -737,15 +840,27 @@ export default function Register() {
                         error={logoError}
                         setError={setLogoError}
                       />
+
+                      <div className="flex items-start gap-3 rounded-xl bg-blue-50 p-4">
+                        <Tag
+                          size={19}
+                          className="mt-0.5 shrink-0 text-blue-600"
+                        />
+
+                        <p className="text-xs leading-5 text-blue-800">
+                          Select all the services your studio offers. This
+                          helps customers find your studio when searching for
+                          specific creative services.
+                        </p>
+                      </div>
                     </>
                   )}
 
-                  {/* STEP 2 */}
+                  {/* STEP 2: Contact information */}
                   {currentStep === 1 && (
                     <>
                       <Field
                         label="Studio Location"
-                        icon={MapPin}
                         error={errors.location}
                         hint="Enter your city, district, or neighborhood."
                       >
@@ -764,6 +879,7 @@ export default function Register() {
                             onChange={(event) =>
                               updateField("location", event.target.value)
                             }
+                            aria-invalid={Boolean(errors.location)}
                             className={inputClass(
                               !isUnlocked("location")
                             )}
@@ -791,6 +907,7 @@ export default function Register() {
                             onChange={(event) =>
                               updateField("phone", event.target.value)
                             }
+                            aria-invalid={Boolean(errors.phone)}
                             className={inputClass(!isUnlocked("phone"))}
                           />
                         </div>
@@ -816,20 +933,31 @@ export default function Register() {
                             onChange={(event) =>
                               updateField("email", event.target.value)
                             }
+                            aria-invalid={Boolean(errors.email)}
                             className={inputClass(!isUnlocked("email"))}
                           />
                         </div>
                       </Field>
 
-                      <div className="rounded-xl bg-blue-50 p-4 text-sm leading-6 text-blue-800">
-                        <ShieldCheck size={20} className="mb-2 text-blue-600" />
-                        Ensure your contact information is correct so clients
-                        can reach your studio.
+                      <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-4">
+                        <ShieldCheck
+                          size={21}
+                          className="mb-2 text-blue-600"
+                        />
+
+                        <p className="text-sm font-semibold text-slate-800">
+                          Your business information
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          Ensure your contact details are correct so customers
+                          can reach your studio.
+                        </p>
                       </div>
                     </>
                   )}
 
-                  {/* STEP 3 */}
+                  {/* STEP 3: Account security */}
                   {currentStep === 2 && (
                     <>
                       <Field
@@ -852,6 +980,7 @@ export default function Register() {
                             onChange={(event) =>
                               updateField("password", event.target.value)
                             }
+                            aria-invalid={Boolean(errors.password)}
                             className={`${inputClass(
                               !isUnlocked("password")
                             )} pr-12`}
@@ -866,7 +995,7 @@ export default function Register() {
                             aria-label={
                               showPassword ? "Hide password" : "Show password"
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-blue-600 disabled:cursor-not-allowed"
                           >
                             {showPassword ? (
                               <EyeOff size={18} />
@@ -888,7 +1017,9 @@ export default function Register() {
                           />
 
                           <input
-                            type={showConfirmPassword ? "text" : "password"}
+                            type={
+                              showConfirmPassword ? "text" : "password"
+                            }
                             autoComplete="new-password"
                             value={values.confirmPassword}
                             disabled={!isUnlocked("confirmPassword")}
@@ -899,6 +1030,7 @@ export default function Register() {
                                 event.target.value
                               )
                             }
+                            aria-invalid={Boolean(errors.confirmPassword)}
                             className={`${inputClass(
                               !isUnlocked("confirmPassword")
                             )} pr-12`}
@@ -915,7 +1047,7 @@ export default function Register() {
                                 ? "Hide password"
                                 : "Show password"
                             }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-blue-600 disabled:cursor-not-allowed"
                           >
                             {showConfirmPassword ? (
                               <EyeOff size={18} />
@@ -926,19 +1058,105 @@ export default function Register() {
                         </div>
                       </Field>
 
-                      <div className="flex items-start gap-3 rounded-xl border border-slate-200 p-4">
-                        <ShieldCheck
-                          size={22}
-                          className="shrink-0 text-emerald-600"
-                        />
+                      <div className="rounded-xl border border-slate-200 p-4">
+                        <div className="flex items-start gap-3">
+                          <ShieldCheck
+                            size={23}
+                            className="shrink-0 text-emerald-600"
+                          />
 
-                        <div>
-                          <p className="text-sm font-semibold">
-                            Keep your account secure
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">
+                              Keep your account secure
+                            </p>
+
+                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                              Use a unique password. Avoid using passwords
+                              from your other accounts.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+                          <p
+                            className={`flex items-center gap-2 text-xs ${
+                              values.password.length >= 8
+                                ? "text-emerald-600"
+                                : "text-slate-400"
+                            }`}
+                          >
+                            <CheckCircle2 size={15} />
+                            At least 8 characters
                           </p>
-                          <p className="mt-1 text-xs leading-5 text-slate-500">
-                            Use a unique password to protect your studio account.
+
+                          <p
+                            className={`flex items-center gap-2 text-xs ${
+                              /[A-Za-z]/.test(values.password)
+                                ? "text-emerald-600"
+                                : "text-slate-400"
+                            }`}
+                          >
+                            <CheckCircle2 size={15} />
+                            Contains a letter
                           </p>
+
+                          <p
+                            className={`flex items-center gap-2 text-xs ${
+                              /\d/.test(values.password)
+                                ? "text-emerald-600"
+                                : "text-slate-400"
+                            }`}
+                          >
+                            <CheckCircle2 size={15} />
+                            Contains a number
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Review registration details */}
+                      <div className="rounded-xl bg-slate-50 p-4">
+                        <h3 className="text-sm font-bold text-slate-800">
+                          Review your studio
+                        </h3>
+
+                        <div className="mt-3 space-y-3 text-sm">
+                          <div className="flex items-start justify-between gap-4">
+                            <span className="text-slate-500">Studio</span>
+                            <span className="text-right font-semibold text-slate-800">
+                              {values.studioName}
+                            </span>
+                          </div>
+
+                          <div className="flex items-start justify-between gap-4">
+                            <span className="text-slate-500">Type</span>
+                            <span className="text-right font-semibold text-slate-800">
+                              {values.studioType}
+                            </span>
+                          </div>
+
+                          <div className="flex items-start justify-between gap-4">
+                            <span className="text-slate-500">Location</span>
+                            <span className="text-right font-semibold text-slate-800">
+                              {values.location}
+                            </span>
+                          </div>
+
+                          <div className="border-t border-slate-200 pt-3">
+                            <p className="mb-2 text-slate-500">
+                              Selected services
+                            </p>
+
+                            <div className="flex flex-wrap gap-2">
+                              {values.category.map((category) => (
+                                <span
+                                  key={category}
+                                  className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700"
+                                >
+                                  {category}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </>
@@ -951,7 +1169,7 @@ export default function Register() {
                     type="button"
                     onClick={goBack}
                     disabled={currentStep === 0}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300 disabled:invisible"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:invisible"
                   >
                     <ArrowLeft size={16} />
                     Back
@@ -961,7 +1179,7 @@ export default function Register() {
                     <button
                       type="button"
                       onClick={goNext}
-                      className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/20"
+                      className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20"
                     >
                       Next Step
                       <ArrowRight size={17} />
@@ -969,7 +1187,7 @@ export default function Register() {
                   ) : (
                     <button
                       type="submit"
-                      className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/20"
+                      className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20"
                     >
                       Complete Registration
                       <CheckCircle2 size={17} />
@@ -978,9 +1196,20 @@ export default function Register() {
                 </div>
               </form>
 
-              <p className="mt-6 text-center text-xs leading-5 text-slate-400">
-                By registering, you agree to StudioHub's Terms of Service
-                and Privacy Policy.
+              <div className="mt-6 flex items-start justify-center gap-2 text-center">
+                <ShieldCheck
+                  size={15}
+                  className="mt-0.5 shrink-0 text-slate-400"
+                />
+
+                <p className="max-w-xl text-xs leading-5 text-slate-400">
+                  By registering, you agree to StudioHub's Terms of Service
+                  and Privacy Policy.
+                </p>
+              </div>
+
+              <p className="mt-4 text-center text-xs text-slate-400">
+                StudioHub · Connect · Create · Grow
               </p>
             </div>
           </main>
@@ -991,6 +1220,7 @@ export default function Register() {
       {showSuccess && (
         <SuccessModal
           studioName={values.studioName.trim()}
+          categories={values.category}
           onClose={() => setShowSuccess(false)}
         />
       )}
