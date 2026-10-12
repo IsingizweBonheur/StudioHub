@@ -456,9 +456,9 @@ export default function Register() {
       <Navbar />
 
       <div className="sticky top-0 z-40 border-b border-slate-200 bg-white">
-        <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-10 xl:px-14">
-          <Breadcrumb />
-        </div>
+        <div className="fixed left-0 right-0 top-20 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-md">
+        <Breadcrumb />
+      </div>
       </div>
 
       <main className="w-full px-4 py-8 sm:px-6 sm:py-10 lg:px-10 lg:py-12 xl:px-14">
