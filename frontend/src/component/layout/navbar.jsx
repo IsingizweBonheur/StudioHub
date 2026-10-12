@@ -73,7 +73,7 @@ export default function Navbar() {
             </Link>
 
             <Link
-              to="/studio/register"
+              to="/studios/register"
               className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               Register Studio
