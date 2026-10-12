@@ -141,7 +141,7 @@ export default function Navbar() {
               <div className="mt-3 flex flex-col gap-3 border-t border-gray-100 pt-4">
 
                 <Link
-                  to="/studio/signin"
+                  to="/studios/signin"
                   onClick={closeMenu}
                   className="rounded-lg px-3 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:text-blue-600"
                 >
@@ -149,7 +149,7 @@ export default function Navbar() {
                 </Link>
 
                 <Link
-                  to="/studio/register"
+                  to="/studios/register"
                   onClick={closeMenu}
                   className="rounded-lg bg-blue-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700"
                 >
